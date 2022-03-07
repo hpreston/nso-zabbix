@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-09-29T18:05:44Z</date>
+    <groups>
+        <group>
+            <name>Role/Cisco NSO Server - Primary</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Cisco NSO</template>
+            <name>Cisco NSO</name>
+            <description>Template to monitor Cisco NSO Server</description>
+            <templates>
+                <template>
+                    <name>Template App Docker</name>
+                </template>
+                <template>
+                    <name>Template Module ICMP Ping</name>
+                </template>
+                <template>
+                    <name>Template OS Linux by Zabbix agent</name>
+                </template>
+            </templates>
+            <groups>
+                <group>
+                    <name>Role/Cisco NSO Server - Primary</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Cisco NSO</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Initiate NSO Device Connection Check</name>
+                    <type>EXTERNAL</type>
+                    <key>check_device_connect.sh[&quot;--host&quot;, &quot;{HOST.CONN}&quot;, &quot;--hostname&quot;, &quot;{HOST.NAME}&quot;, &quot;--username&quot;, &quot;{$NSO_USERNAME}&quot;, &quot;--password&quot;, &quot;{$NSO_PASSWORD}&quot;, &quot;--port&quot;, &quot;{$NSO_RESTCONF_PORT}&quot;]</key>
+                    <delay>5m</delay>
+                    <trends>0</trends>
+                    <status>DISABLED</status>
+                    <value_type>CHAR</value_type>
+                    <description>Trigger a check of device connection status. &#13;
+&#13;
+NOTE: Currently disabled as work on long running jobs still needs to be done.</description>
+                    <applications>
+                        <application>
+                            <name>Cisco NSO</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>Check NSO Package State</name>
+                    <type>EXTERNAL</type>
+                    <key>check_nso_packages.sh[&quot;--host&quot;, &quot;{HOST.CONN}&quot;, &quot;--username&quot;, &quot;{$NSO_USERNAME}&quot;, &quot;--password&quot;, &quot;{$NSO_PASSWORD}&quot;, &quot;--port&quot;, &quot;{$NSO_RESTCONF_PORT}&quot;]</key>
+                    <delay>1h</delay>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <description>Check to see that all packages loaded into NSO are fully operational.</description>
+                    <applications>
+                        <application>
+                            <name>Cisco NSO</name>
+                        </application>
+                    </applications>
+                    <triggers>
+                        <trigger>
+                            <expression>(({regexp(error)})&lt;&gt;0)</expression>
+                            <name>NSO Package Status Error</name>
+                            <priority>HIGH</priority>
+                        </trigger>
+                        <trigger>
+                            <expression>(({regexp(warning)})&lt;&gt;0)</expression>
+                            <name>NSO Package Status Warning</name>
+                            <priority>WARNING</priority>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Check RESTCONF</name>
+                    <type>EXTERNAL</type>
+                    <key>check_restconf.sh[&quot;--host&quot;, &quot;{HOST.CONN}&quot;]</key>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <description>Check if RESTCONF is reachable and running on the NSO server.</description>
+                    <applications>
+                        <application>
+                            <name>Cisco NSO</name>
+                        </application>
+                    </applications>
+                    <triggers>
+                        <trigger>
+                            <expression>(({regexp(RESTCONF unreachable)})&lt;&gt;0)</expression>
+                            <name>RESTCONF Unavailable</name>
+                            <priority>AVERAGE</priority>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Cisco NSO SSH Service</name>
+                    <key>net.tcp.service[ssh,,{$NSO_SSH_PORT}]</key>
+                    <history>1w</history>
+                    <description>Check if NCS CLI is available over SSH.</description>
+                    <applications>
+                        <application>
+                            <name>Cisco NSO</name>
+                        </application>
+                    </applications>
+                    <valuemap>
+                        <name>Service state</name>
+                    </valuemap>
+                    <triggers>
+                        <trigger>
+                            <expression>{max(#3)}=0</expression>
+                            <name>Cisco NSO SSH Service Down</name>
+                            <priority>HIGH</priority>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Trapper NSO Device Connection Check</name>
+                    <type>TRAP</type>
+                    <key>nso-device-connect</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <status>DISABLED</status>
+                    <value_type>CHAR</value_type>
+                    <description>Collect device connection status information from long running script. &#13;
+&#13;
+NOTE: Currently disabled as the work to enable long running tasks is to be done.</description>
+                    <applications>
+                        <application>
+                            <name>Cisco NSO</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+            <macros>
+                <macro>
+                    <macro>{$NSO_NETCONF_PORT}</macro>
+                    <value>830</value>
+                    <description>The port NETCONF is running on the NSO server</description>
+                </macro>
+                <macro>
+                    <macro>{$NSO_PASSWORD}</macro>
+                    <type>SECRET_TEXT</type>
+                    <description>The password to use to test NSO services</description>
+                </macro>
+                <macro>
+                    <macro>{$NSO_RESTCONF_PORT}</macro>
+                    <value>443</value>
+                    <description>The port RESTCONF is running on the NSO server</description>
+                </macro>
+                <macro>
+                    <macro>{$NSO_SSH_PORT}</macro>
+                    <value>2024</value>
+                    <description>The port the NCS CLI is available over SSH</description>
+                </macro>
+                <macro>
+                    <macro>{$NSO_USERNAME}</macro>
+                    <description>The username to use to test NSO services</description>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+    <value_maps>
+        <value_map>
+            <name>Service state</name>
+            <mappings>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>Down</newvalue>
+                </mapping>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>Up</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+    </value_maps>
+</zabbix_export>
